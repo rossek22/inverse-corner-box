@@ -1,0 +1,62 @@
+{
+  "name": "inverse-corner-box",
+  "version": "1.0.0",
+  "description": "Smooth inverse (concave) corner cards and containers for React and Next.js",
+  "keywords": [
+    "react",
+    "nextjs",
+    "ui",
+    "corner",
+    "inverse-corner",
+    "concave",
+    "notch",
+    "card",
+    "component",
+    "tailwind",
+    "design",
+    "svg"
+  ],
+  "author": "Aram <arampalyan0222@gmail.com> (https://github.com/rossek22)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rossek22/inverse-corner-box.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rossek22/inverse-corner-box/issues"
+  },
+  "homepage": "https://github.com/rossek22/inverse-corner-box#readme",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "react": ">=16.8.0 || ^18.0.0 || ^19.0.0",
+    "react-dom": ">=16.8.0 || ^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.0"
+  }
+}
