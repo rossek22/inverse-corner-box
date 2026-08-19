@@ -1,7 +1,7 @@
 {
   "name": "inverse-corner-box",
-  "version": "1.0.0",
-  "description": "Smooth inverse (concave) corner cards and containers for React and Next.js",
+  "version": "1.1.0",
+  "description": "Smooth inverse (concave) corner cards and multi-corner containers with spring morph animations for React and Next.js",
   "keywords": [
     "react",
     "nextjs",
@@ -14,7 +14,9 @@
     "component",
     "tailwind",
     "design",
-    "svg"
+    "svg",
+    "spring",
+    "morph"
   ],
   "author": "Aram <arampalyan0222@gmail.com> (https://github.com/rossek22)",
   "license": "MIT",
@@ -48,12 +50,14 @@
     "prepublishOnly": "npm run build"
   },
   "peerDependencies": {
+    "motion": ">=10.0.0 || ^11.0.0 || ^12.0.0 || ^13.0.0",
     "react": ">=16.8.0 || ^18.0.0 || ^19.0.0",
     "react-dom": ">=16.8.0 || ^18.0.0 || ^19.0.0"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "motion": "^13.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tsup": "^8.3.5",

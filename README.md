@@ -1,6 +1,6 @@
 # InverseCornerBox
 
-> Smooth, responsive cards and containers with mathematical **inverted (concave) corners** and aligned button/badge slots for **React** and **Next.js**.
+> Smooth, responsive cards and containers with mathematical **inverted (concave) corners**, **multi-corner slots**, and **interactive spring morph animations** for **React** and **Next.js**.
 
 [![npm version](https://img.shields.io/npm/v/inverse-corner-box.svg)](https://www.npmjs.com/package/inverse-corner-box)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
@@ -10,11 +10,12 @@
 
 ## ✨ Features
 
-- 📐 **True SVG Arc Geometry** – Uses exact mathematical SVG arcs (`A rx ry ...`) for flawless concave fillets without CSS pseudo-element hacks.
-- ⚡ **Zero Border Lag** – Fill and stroke rendered in a unified SVG path layer, preventing any stroke desynchronization during animations or layout resizes.
+- 📐 **True Mathematical SVG Arcs** – Exact SVG curves (`A rx ry ...`) for flawless concave fillets without CSS pseudo-element hacks.
+- 🔄 **Multi-Corner Support** – Configure inverted notches independently for `topLeft`, `topRight`, `bottomRight`, and `bottomLeft` simultaneously.
+- ⚡ **Interactive Spring Morphing** – Fluid, zero-lag spring animations on hover (`interactiveMorph`) powered by `motion`.
+- ✂️ **Built-in Clip-Path Masking** – Automatic SVG clipPath mask so child content never overflows past the curved corners.
 - 📱 **Fully Responsive** – Automatically observes container dimensions using `ResizeObserver`.
 - 🚀 **Next.js & SSR Ready** – Includes `'use client'` banner and SSR-safe isomorphic layout effects.
-- 🎨 **Deeply Customizable** – Configure outer radius, inverted radius, outer fillet radius, notch dimensions, stroke, fill, shadows, and all 4 corner positions.
 - 📦 **Dual ESM & CJS Builds** – Modern bundler support with full TypeScript `.d.ts` definitions.
 
 ---
@@ -23,21 +24,23 @@
 
 ```bash
 # npm
-npm install inverse-corner-box
+npm install inverse-corner-box motion
 
 # yarn
-yarn add inverse-corner-box
+yarn add inverse-corner-box motion
 
 # pnpm
-pnpm add inverse-corner-box
+pnpm add inverse-corner-box motion
 
 # bun
-bun add inverse-corner-box
+bun add inverse-corner-box motion
 ```
 
 ---
 
 ## 🚀 Quick Start
+
+### 1. Single Corner Shorthand
 
 ```tsx
 import React from "react";
@@ -75,19 +78,47 @@ export default function Card() {
 
 ---
 
-## 🧭 Positions
+### 2. Multi-Corner Setup
 
-`InverseCornerBox` supports placing the inverted notch in any of the 4 corners:
-
-| Position | Value | Description |
-|---|---|---|
-| **Bottom Right** *(default)* | `"bottom-right"` | Cutout in the bottom-right corner |
-| **Bottom Left** | `"bottom-left"` | Cutout in the bottom-left corner |
-| **Top Right** | `"top-right"` | Cutout in the top-right corner |
-| **Top Left** | `"top-left"` | Cutout in the top-left corner |
+Configure separate notches and content for any or all corners:
 
 ```tsx
-<InverseCornerBox position="top-right" notchContent={<Badge>NEW</Badge>}>
+import { InverseCornerBox } from "inverse-corner-box";
+
+export default function MultiCornerCard() {
+  return (
+    <InverseCornerBox
+      className="w-full h-80 p-8"
+      bg="#0F172A"
+      borderColor="rgba(56, 189, 248, 0.25)"
+      topLeft={{ notchWidth: 120, notchHeight: 44 }}
+      notchTopLeft={<span className="text-xs font-mono text-cyan-400 font-bold">STATUS: ACTIVE</span>}
+      bottomRight={{ notchWidth: 150, notchHeight: 52 }}
+      notchBottomRight={
+        <button className="w-full h-full bg-cyan-600 text-white rounded-xl font-medium">
+          Connect →
+        </button>
+      }
+    >
+      <h2 className="text-white text-2xl font-bold">Multi-Corner Grid</h2>
+    </InverseCornerBox>
+  );
+}
+```
+
+---
+
+### 3. Interactive Spring Morphing
+
+Enable fluid spring morph animations on hover:
+
+```tsx
+<InverseCornerBox
+  interactiveMorph={true}
+  morphWidthDelta={35}
+  position="bottom-right"
+  notchContent={<button className="w-full h-full bg-cyan-600 text-white rounded-xl">Hover me</button>}
+>
   {/* Content */}
 </InverseCornerBox>
 ```
@@ -96,53 +127,48 @@ export default function Card() {
 
 ## ⚙️ Props Reference
 
-`InverseCornerBox` extends all standard `React.HTMLAttributes<HTMLDivElement>` props (such as `onClick`, `id`, `style`, `className`, etc.) and supports `ref` forwarding.
+`InverseCornerBox` extends all standard `React.HTMLAttributes<HTMLDivElement>` props (`onClick`, `id`, `style`, `className`, etc.) and supports `ref` forwarding.
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `children` | `ReactNode` | `undefined` | Inner content rendered within the container. |
-| `notchContent` | `ReactNode` | `undefined` | Element placed inside the inverted notch cutout (e.g. button, badge). |
-| `position` | `CornerPosition` | `"bottom-right"` | Which corner to place the inverted notch in. |
-| `bg` / `backgroundColor` | `string` | `"#18181B"` | Fill color of the shape (hex, rgb, hsl, gradient). |
-| `borderColor` | `string` | `"rgba(255, 255, 255, 0.2)"` | Border stroke color. |
-| `borderWidth` | `number` | `1.2` | Border stroke width in pixels. |
-| `strokeDasharray` | `string` | `undefined` | Optional dash array pattern for dashed/dotted strokes. |
+| `position` | `CornerPosition` | `"bottom-right"` | Corner location for single-slot shorthand (`"bottom-right" \| "bottom-left" \| "top-right" \| "top-left"`). |
+| `notchContent` | `ReactNode` | `undefined` | Element placed inside the single-slot notch cutout. |
+| `notchWidth` | `number` | `150` | Default notch cutout width in pixels. |
+| `notchHeight` | `number` | `54` | Default notch cutout height in pixels. |
 | `cornerRadius` | `number` | `28` | Outer corner radius for standard corners. |
 | `invertedRadius` | `number` | `24` | Radius of the concave/inverted curve. |
-| `outerFilletRadius` | `number` | `invertedRadius` | Transition radius at the outer boundaries of the notch. |
-| `notchWidth` | `number` | `145` | Width of the notch cutout in pixels. |
-| `notchHeight` | `number` | `56` | Height of the notch cutout in pixels. |
+| `topLeft` | `CornerNotchConfig \| boolean` | `undefined` | Configuration for top-left notch. |
+| `topRight` | `CornerNotchConfig \| boolean` | `undefined` | Configuration for top-right notch. |
+| `bottomRight` | `CornerNotchConfig \| boolean` | `undefined` | Configuration for bottom-right notch. |
+| `bottomLeft` | `CornerNotchConfig \| boolean` | `undefined` | Configuration for bottom-left notch. |
+| `notchTopLeft` | `ReactNode` | `undefined` | Dedicated slot element for top-left notch. |
+| `notchTopRight` | `ReactNode` | `undefined` | Dedicated slot element for top-right notch. |
+| `notchBottomRight` | `ReactNode` | `undefined` | Dedicated slot element for bottom-right notch. |
+| `notchBottomLeft` | `ReactNode` | `undefined` | Dedicated slot element for bottom-left notch. |
+| `interactiveMorph` | `boolean` | `false` | Enables spring-animated morphing on hover. |
+| `morphWidthDelta` | `number` | `35` | Additional width expansion during hover morphing. |
+| `clipMethod` | `'clip-path' \| 'svg-background' \| 'none'` | `'clip-path'` | Clipping strategy for inner children. |
+| `bg` | `string` | `"#18181B"` | Fill color of the shape (hex, rgb, hsl, gradient). |
+| `borderColor` | `string` | `"rgba(255, 255, 255, 0.22)"` | Border stroke color. |
+| `borderWidth` | `number` | `1.2` | Border stroke width in pixels. |
 | `shadow` | `boolean \| string` | `true` | Enables default shadow or custom CSS drop-shadow string. |
-| `className` | `string` | `""` | Additional CSS / Tailwind classes for the container. |
-| `notchClassName` | `string` | `""` | Additional CSS classes for the notch container. |
-| `notchStyle` | `CSSProperties` | `undefined` | Custom inline styles for the notch container. |
-| `svgClassName` | `string` | `""` | Additional CSS classes for the SVG element. |
-| `svgStyle` | `CSSProperties` | `undefined` | Custom inline styles for the SVG element. |
-| `contentClassName` | `string` | `""` | Additional CSS classes for the content wrapper. |
-| `contentStyle` | `CSSProperties` | `undefined` | Custom inline styles for the content wrapper. |
-| `pathProps` | `SVGProps<SVGPathElement>` | `undefined` | Props forwarded directly to the SVG `<path>` element. |
 
 ---
 
-## 🛠️ Low-Level SVG Path Generator
+## 🛠️ Low-Level Path Generators
 
-You can also use the standalone mathematical path generator function to draw raw SVG paths in your own custom canvas, Three.js, or SVG elements:
+You can also import the path generators directly:
 
 ```tsx
-import { generateNotchPath } from "inverse-corner-box";
+import { generateMultiCornerPath, generateNotchPath } from "inverse-corner-box";
 
-const pathData = generateNotchPath({
-  width: 400,
-  height: 250,
-  cornerRadius: 28,
-  invertedRadius: 24,
-  notchWidth: 140,
-  notchHeight: 56,
-  position: "bottom-right",
+const pathData = generateMultiCornerPath(400, 250, {
+  globalCornerRadius: 28,
+  globalInvertedRadius: 24,
+  bottomRight: { notchWidth: 140, notchHeight: 56 },
+  topLeft: { notchWidth: 100, notchHeight: 40 },
 });
-
-console.log(pathData);
-// "M 28 0 L 372 0 A 28 28 0 0 1 400 28 ..."
 ```
 
 ---

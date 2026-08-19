@@ -1,122 +1,153 @@
-export type CornerPosition = "bottom-right" | "bottom-left" | "top-right" | "top-left";
+export type CornerPosition = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+export type ClipMethod = 'clip-path' | 'svg-background' | 'none';
 
-export interface GenerateNotchPathOptions {
-    /** Total width of the container */
-    width: number;
-    /** Total height of the container */
-    height: number;
-    /** Outer corner radius for normal corners (default: 28) */
-    cornerRadius?: number;
-    /** Radius of the concave/inverted curve (default: 24) */
-    invertedRadius?: number;
-    /** Outer fillet transition radius at notch edges (default: equals invertedRadius) */
-    outerFilletRadius?: number;
-    /** Width of the notch cutout (default: 145) */
-    notchWidth?: number;
-    /** Height of the notch cutout (default: 56) */
-    notchHeight?: number;
-    /** Corner position where the notch is located (default: "bottom-right") */
-    position?: CornerPosition;
+export interface CornerNotchConfig {
+  enabled?: boolean;
+  notchWidth?: number;
+  notchHeight?: number;
+  invertedRadius?: number;
+  cornerRadius?: number;
 }
 
-/**
- * Generates a mathematical SVG path with smooth inverse (concave) corners and fillets.
- */
+export interface MultiCornerOptions {
+  globalCornerRadius?: number;
+  globalInvertedRadius?: number;
+  topLeft?: CornerNotchConfig | boolean;
+  topRight?: CornerNotchConfig | boolean;
+  bottomRight?: CornerNotchConfig | boolean;
+  bottomLeft?: CornerNotchConfig | boolean;
+}
+
+export interface GenerateNotchPathOptions {
+  width: number;
+  height: number;
+  cornerRadius?: number;
+  invertedRadius?: number;
+  outerFilletRadius?: number;
+  notchWidth?: number;
+  notchHeight?: number;
+  position?: CornerPosition;
+}
+
+// Geometry Path Generator for Multi-corner & Single-corner notches
+export function generateMultiCornerPath(
+  width: number,
+  height: number,
+  options: MultiCornerOptions = {}
+): string {
+  const w = Math.max(width, 100);
+  const h = Math.max(height, 80);
+  const defR = options.globalCornerRadius ?? 28;
+  const defInv = options.globalInvertedRadius ?? 24;
+
+  const getRaw = (cfg?: CornerNotchConfig | boolean) => {
+    if (!cfg) return { enabled: false, reqW: 0, reqH: 0, r_inv: defInv, R: defR };
+    if (cfg === true) return { enabled: true, reqW: 130, reqH: 50, r_inv: defInv, R: defR };
+    return {
+      enabled: cfg.enabled !== false,
+      reqW: cfg.notchWidth ?? 130,
+      reqH: cfg.notchHeight ?? 50,
+      r_inv: cfg.invertedRadius ?? defInv,
+      R: cfg.cornerRadius ?? defR,
+    };
+  };
+
+  const rawTl = getRaw(options.topLeft);
+  const rawTr = getRaw(options.topRight);
+  const rawBr = getRaw(options.bottomRight);
+  const rawBl = getRaw(options.bottomLeft);
+
+  const resolve = (raw: ReturnType<typeof getRaw>, maxW: number, maxH: number) => {
+    if (!raw.enabled) return { enabled: false, nw: 0, nh: 0, r_inv: defInv, R: defR, r_out: defInv };
+    const nw = Math.max(10, Math.min(raw.reqW, maxW));
+    const nh = Math.max(10, Math.min(raw.reqH, maxH));
+    const r_inv = Math.min(raw.r_inv, nw / 2, nh / 2);
+    const R = Math.min(raw.R, w / 4, h / 4);
+    const r_out = Math.min(r_inv, (w - nw) / 3, (h - nh) / 3);
+    return { enabled: true, nw, nh, r_inv, R, r_out };
+  };
+
+  const tl = resolve(rawTl, rawTr.enabled ? Math.floor(w * 0.48) : Math.floor(w - rawTl.R - 20), rawBl.enabled ? Math.floor(h * 0.48) : Math.floor(h - rawTl.R - 15));
+  const tr = resolve(rawTr, rawTl.enabled ? Math.floor(w * 0.48) : Math.floor(w - rawTr.R - 20), rawBr.enabled ? Math.floor(h * 0.48) : Math.floor(h - rawTr.R - 15));
+  const br = resolve(rawBr, rawBl.enabled ? Math.floor(w * 0.48) : Math.floor(w - rawBr.R - 20), rawTr.enabled ? Math.floor(h * 0.48) : Math.floor(h - rawBr.R - 15));
+  const bl = resolve(rawBl, rawBr.enabled ? Math.floor(w * 0.48) : Math.floor(w - rawBl.R - 20), rawTl.enabled ? Math.floor(h * 0.48) : Math.floor(h - rawBl.R - 15));
+
+  const p: string[] = [];
+
+  // Top edge & start
+  p.push(tl.enabled ? `M ${tl.nw + tl.r_out} 0` : `M ${tl.R} 0`);
+
+  // Top-Right
+  if (tr.enabled) {
+    p.push(`L ${w - tr.nw - tr.r_out} 0`);
+    p.push(`A ${tr.r_out} ${tr.r_out} 0 0 1 ${w - tr.nw} ${tr.r_out}`);
+    p.push(`L ${w - tr.nw} ${tr.nh - tr.r_inv}`);
+    p.push(`A ${tr.r_inv} ${tr.r_inv} 0 0 0 ${w - tr.nw + tr.r_inv} ${tr.nh}`);
+    p.push(`L ${w - tr.r_out} ${tr.nh}`);
+    p.push(`A ${tr.r_out} ${tr.r_out} 0 0 1 ${w} ${tr.nh + tr.r_out}`);
+  } else {
+    p.push(`L ${w - tr.R} 0`);
+    p.push(`A ${tr.R} ${tr.R} 0 0 1 ${w} ${tr.R}`);
+  }
+
+  // Bottom-Right
+  if (br.enabled) {
+    p.push(`L ${w} ${h - br.nh - br.r_out}`);
+    p.push(`A ${br.r_out} ${br.r_out} 0 0 1 ${w - br.r_out} ${h - br.nh}`);
+    p.push(`L ${w - br.nw + br.r_inv} ${h - br.nh}`);
+    p.push(`A ${br.r_inv} ${br.r_inv} 0 0 0 ${w - br.nw} ${h - br.nh + br.r_inv}`);
+    p.push(`L ${w - br.nw} ${h - br.r_out}`);
+    p.push(`A ${br.r_out} ${br.r_out} 0 0 1 ${w - br.nw - br.r_out} ${h}`);
+  } else {
+    p.push(`L ${w} ${h - br.R}`);
+    p.push(`A ${br.R} ${br.R} 0 0 1 ${w - br.R} ${h}`);
+  }
+
+  // Bottom-Left
+  if (bl.enabled) {
+    p.push(`L ${bl.nw + bl.r_out} ${h}`);
+    p.push(`A ${bl.r_out} ${bl.r_out} 0 0 1 ${bl.nw} ${h - bl.r_out}`);
+    p.push(`L ${bl.nw} ${h - bl.nh + bl.r_inv}`);
+    p.push(`A ${bl.r_inv} ${bl.r_inv} 0 0 0 ${bl.nw - bl.r_inv} ${h - bl.nh}`);
+    p.push(`L ${bl.r_out} ${h - bl.nh}`);
+    p.push(`A ${bl.r_out} ${bl.r_out} 0 0 1 0 ${h - bl.nh - bl.r_out}`);
+  } else {
+    p.push(`L ${bl.R} ${h}`);
+    p.push(`A ${bl.R} ${bl.R} 0 0 1 0 ${h - bl.R}`);
+  }
+
+  // Top-Left finish
+  if (tl.enabled) {
+    p.push(`L 0 ${tl.nh + tl.r_out}`);
+    p.push(`A ${tl.r_out} ${tl.r_out} 0 0 1 ${tl.r_out} ${tl.nh}`);
+    p.push(`L ${tl.nw - tl.r_inv} ${tl.nh}`);
+    p.push(`A ${tl.r_inv} ${tl.r_inv} 0 0 0 ${tl.nw} ${tl.nh - tl.r_inv}`);
+    p.push(`L ${tl.nw} ${tl.r_out}`);
+    p.push(`A ${tl.r_out} ${tl.r_out} 0 0 1 ${tl.nw + tl.r_out} 0`);
+  } else {
+    p.push(`L 0 ${tl.R}`);
+    p.push(`A ${tl.R} ${tl.R} 0 0 1 ${tl.R} 0`);
+  }
+
+  p.push('Z');
+  return p.join(' ');
+}
+
 export function generateNotchPath({
-    width: w,
-    height: h,
-    cornerRadius = 28,
-    invertedRadius = 24,
-    outerFilletRadius,
-    notchWidth = 145,
-    notchHeight = 56,
-    position = "bottom-right",
+  width,
+  height,
+  cornerRadius = 28,
+  invertedRadius = 24,
+  notchWidth = 130,
+  notchHeight = 50,
+  position = 'bottom-right',
 }: GenerateNotchPathOptions): string {
-    if (w <= 0 || h <= 0) return "";
-
-    // Safety clamping to prevent path deformation when size is smaller than radii
-    const nw = Math.min(notchWidth, w);
-    const nh = Math.min(notchHeight, h);
-    const maxRadius = Math.min(w / 2, h / 2);
-    const R = Math.max(0, Math.min(cornerRadius, maxRadius));
-    const r_inv = Math.max(0, Math.min(invertedRadius, nw / 2, nh / 2));
-    const r_out = Math.max(
-        0,
-        Math.min(outerFilletRadius !== undefined ? outerFilletRadius : r_inv, nw / 2, nh / 2),
-    );
-
-    if (position === "bottom-right") {
-        return [
-            `M ${R} 0`,
-            `L ${Math.max(R, w - R)} 0`,
-            `A ${R} ${R} 0 0 1 ${w} ${R}`,
-            `L ${w} ${Math.max(R, h - nh - r_out)}`,
-            `A ${r_out} ${r_out} 0 0 1 ${w - r_out} ${h - nh}`,
-            `L ${w - nw + r_inv} ${h - nh}`,
-            `A ${r_inv} ${r_inv} 0 0 0 ${w - nw} ${h - nh + r_inv}`,
-            `L ${w - nw} ${h - r_out}`,
-            `A ${r_out} ${r_out} 0 0 1 ${w - nw - r_out} ${h}`,
-            `L ${R} ${h}`,
-            `A ${R} ${R} 0 0 1 0 ${h - R}`,
-            `L 0 ${R}`,
-            `A ${R} ${R} 0 0 1 ${R} 0`,
-            "Z",
-        ].join(" ");
-    }
-
-    if (position === "bottom-left") {
-        return [
-            `M ${R} 0`,
-            `L ${Math.max(R, w - R)} 0`,
-            `A ${R} ${R} 0 0 1 ${w} ${R}`,
-            `L ${w} ${h - R}`,
-            `A ${R} ${R} 0 0 1 ${w - R} ${h}`,
-            `L ${nw + r_out} ${h}`,
-            `A ${r_out} ${r_out} 0 0 1 ${nw} ${h - r_out}`,
-            `L ${nw} ${h - nh + r_inv}`,
-            `A ${r_inv} ${r_inv} 0 0 0 ${nw - r_inv} ${h - nh}`,
-            `L ${r_out} ${h - nh}`,
-            `A ${r_out} ${r_out} 0 0 1 0 ${h - nh - r_out}`,
-            `L 0 ${R}`,
-            `A ${R} ${R} 0 0 1 ${R} 0`,
-            "Z",
-        ].join(" ");
-    }
-
-    if (position === "top-right") {
-        return [
-            `M ${R} 0`,
-            `L ${w - nw - r_out} 0`,
-            `A ${r_out} ${r_out} 0 0 1 ${w - nw} ${r_out}`,
-            `L ${w - nw} ${nh - r_inv}`,
-            `A ${r_inv} ${r_inv} 0 0 0 ${w - nw + r_inv} ${nh}`,
-            `L ${w - r_out} ${nh}`,
-            `A ${r_out} ${r_out} 0 0 1 ${w} ${nh + r_out}`,
-            `L ${w} ${h - R}`,
-            `A ${R} ${R} 0 0 1 ${w - R} ${h}`,
-            `L ${R} ${h}`,
-            `A ${R} ${R} 0 0 1 0 ${h - R}`,
-            `L 0 ${R}`,
-            `A ${R} ${R} 0 0 1 ${R} 0`,
-            "Z",
-        ].join(" ");
-    }
-
-    // top-left
-    return [
-        `M ${nw + r_out} 0`,
-        `L ${Math.max(R, w - R)} 0`,
-        `A ${R} ${R} 0 0 1 ${w} ${R}`,
-        `L ${w} ${h - R}`,
-        `A ${R} ${R} 0 0 1 ${w - R} ${h}`,
-        `L ${R} ${h}`,
-        `A ${R} ${R} 0 0 1 0 ${h - R}`,
-        `L 0 ${nh + r_out}`,
-        `A ${r_out} ${r_out} 0 0 1 ${r_out} ${nh}`,
-        `L ${nw - r_inv} ${nh}`,
-        `A ${r_inv} ${r_inv} 0 0 0 ${nw} ${nh - r_inv}`,
-        `L ${nw} ${r_out}`,
-        `A ${r_out} ${r_out} 0 0 1 ${nw + r_out} 0`,
-        "Z",
-    ].join(" ");
+  return generateMultiCornerPath(width, height, {
+    globalCornerRadius: cornerRadius,
+    globalInvertedRadius: invertedRadius,
+    topLeft: position === 'top-left' ? { notchWidth, notchHeight } : false,
+    topRight: position === 'top-right' ? { notchWidth, notchHeight } : false,
+    bottomRight: position === 'bottom-right' ? { notchWidth, notchHeight } : false,
+    bottomLeft: position === 'bottom-left' ? { notchWidth, notchHeight } : false,
+  });
 }

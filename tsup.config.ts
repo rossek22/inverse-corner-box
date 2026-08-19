@@ -11,7 +11,7 @@ export default defineConfig({
   minify: false,
   treeshake: true,
   splitting: false,
-  external: ["react", "react-dom"],
+  external: ["react", "react-dom", "motion", "motion/react", "framer-motion"],
   async onSuccess() {
     const files = ["dist/index.js", "dist/index.mjs"];
     for (const f of files) {
