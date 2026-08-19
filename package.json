@@ -1,6 +1,6 @@
 {
   "name": "inverse-corner-box",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Smooth inverse (concave) corner cards and multi-corner containers with spring morph animations for React and Next.js",
   "keywords": [
     "react",
@@ -18,7 +18,7 @@
     "spring",
     "morph"
   ],
-  "author": "Aram <arampalyan0222@gmail.com> (https://github.com/rossek22)",
+  "author": "rossek22 (https://github.com/rossek22)",
   "license": "MIT",
   "repository": {
     "type": "git",

@@ -175,4 +175,4 @@ const pathData = generateMultiCornerPath(400, 250, {
 
 ## 📄 License
 
-MIT © [Aram (rossek22)](https://github.com/rossek22)
+Released under the [MIT License](https://opensource.org/licenses/MIT). © [rossek22](https://github.com/rossek22)
